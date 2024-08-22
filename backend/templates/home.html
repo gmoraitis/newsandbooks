@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask App</title>
+</head>
+<body>
+    <h1>Welcome {{ user_info.preferred_username }} to News and Books</h1>
+    {% if user_info %}
+
+        <h2>Newspapers</h2>
+        <ul>
+            {% for id, name in newspapers.items() %}
+                <li>{{ name }}</li>
+            {% endfor %}
+        </ul>
+
+        {% if 'premium' in roles %}
+            <h2>Books</h2>
+            <ul>
+                {% for id, name in books.items() %}
+                    <li>{{ name }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <a href="{{ url_for('signout') }}">Logout</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+    {% endif %}
+</body>
+</html>

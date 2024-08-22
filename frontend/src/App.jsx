@@ -1,23 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Keycloak from 'keycloak-js';
 import './App.css';
 
 function App() {
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
+  const [keycloak, setKeycloak] = useState(null);
+  const [authenticated, setAuthenticated] = useState(false);
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
 
-  const handleLogin = async () => {
+  useEffect(() => {
+    const initKeycloak = new Keycloak({
+      url: 'http://localhost:8080/', 
+      realm: 'news_books_realm',
+      clientId: 'news_books_client',
+    });
+
+    initKeycloak.init({ onLoad: 'login-required' }).then(authenticated => {
+      setKeycloak(initKeycloak);
+      setAuthenticated(authenticated);
+      if (authenticated) {
+        fetchProducts(initKeycloak.token);
+      }
+    }).catch(error => {
+      console.error('Keycloak initialization failed:', error);
+      setMessage('Keycloak initialization failed. Please check console for details.');
+    });
+  }, []);
+
+  const fetchProducts = async (token) => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/login', {
+      const response = await fetch('http://127.0.0.1:5000/', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, password }),
       });
 
       const data = await response.json();
+      console.log("Response Data:", data);
 
       if (response.ok) {
         setProducts(data.products);
@@ -27,39 +48,23 @@ function App() {
         setProducts([]);
       }
     } catch (error) {
-      console.error('Error:', error);
-      setMessage('An error occurred. Please try again.');
+      console.error('Failed to fetch products:', error);
+      setMessage('Failed to fetch products. Please try again.');
     }
   };
 
-  const handleLogout = async () => {
-    await fetch('http://127.0.0.1:5000/logout', {
-      method: 'POST',
-    });
-    setName('');
-    setPassword('');
-    setProducts([]);
-    setMessage('');
+  const handleLogout = () => {
+    if (keycloak) {
+      keycloak.logout();
+    }
   };
 
   return (
     <div className="App">
-      <h1>News&Books</h1>
-      {products.length === 0 ? (
+      <h1>News & Books</h1>
+      {authenticated && products.length === 0 ? (
         <div className="card">
-          <input
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button onClick={handleLogin}>Login</button>
+          <button onClick={() => fetchProducts(keycloak.token)}>Fetch Products</button>
           {message && <p>{message}</p>}
         </div>
       ) : (
