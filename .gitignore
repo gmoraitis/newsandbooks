@@ -2,6 +2,7 @@
 backend/venv/
 backend/pyenv.cfg
 backend/__pycache__/
+backend/clients_secrets.json
 
 # Frontend
 # Logs
