@@ -4,6 +4,7 @@ import jwt
 from flask import Flask, redirect, url_for, session, render_template
 from flask_oidc import OpenIDConnect
 import urllib.parse
+import requests
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -21,15 +22,7 @@ app.config.update({
 
 oidc = OpenIDConnect(app)
 
-# Data sample definitions, will be moved on models
-newspapers = {
-    '1': 'News of the World',
-    '2': 'Today\'s News'
-}
-books = {
-    '1': 'Life on Mars',
-    '2': 'Think Fast'
-}
+
 
 
 @app.route('/login')
@@ -42,30 +35,29 @@ def login():
 @app.route('/')
 def home():
     if oidc.user_loggedin:
-        # User is logged in, get the access token
         access_token = oidc.get_access_token()
-        logging.debug(f"Access Token: {access_token}")  # Log the access token
+        logging.debug(f"Access Token: {access_token}")
 
         try:
             # Decode the JWT access token
             decoded_token = jwt.decode(access_token, options={"verify_signature": False}, algorithms=["RS256"])
-            logging.debug(f"Decoded Token: {decoded_token}")  # Log the decoded token
+            logging.debug(f"Decoded Token: {decoded_token}")
 
             # Extract roles from the token
             realm_access = decoded_token.get('realm_access', {})
             roles = realm_access.get('roles', [])
             logging.debug(f"User Roles: {roles}")
 
-              # Pass the roles and other information to the template
-            return render_template('home.html', newspapers=newspapers, books=books, user_info=decoded_token, roles=roles)
+            # Fetch data from the resource server
+            headers = {'Authorization': f'Bearer {access_token}'}
+            newspapers_response = requests.get("http://localhost:5001/api/newspapers", headers=headers)
+            books_response = requests.get("http://localhost:5001/api/books", headers=headers)
 
-            # # Check for 'premium' role in news_books_client resource roles
-            # if 'premium' in roles:
-            #     logging.debug("User has premium role")
-            #     return render_template('home.html', newspapers=newspapers, books=books, user_info=decoded_token)
-            # else:
-            #     logging.debug("User does not have premium role")
-            #     return render_template('home.html', newspapers=newspapers, user_info=decoded_token)
+            newspapers = newspapers_response.json() if newspapers_response.status_code == 200 else {}
+            books = books_response.json() if books_response.status_code == 200 else {}
+
+            # Render the template with data from the resource server
+            return render_template('home.html', newspapers=newspapers, books=books, user_info=decoded_token, roles=roles)
 
         except jwt.DecodeError as e:
             logging.error(f"Failed to decode JWT: {e}")
