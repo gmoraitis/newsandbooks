@@ -1,7 +1,7 @@
 # imports
 import logging
 import jwt
-from flask import Flask, redirect, url_for, session, render_template
+from flask import Flask, redirect, url_for, session, render_template, jsonify
 from flask_oidc import OpenIDConnect
 import urllib.parse
 import requests
@@ -22,15 +22,10 @@ app.config.update({
 
 oidc = OpenIDConnect(app)
 
-
-
-
 @app.route('/login')
-@oidc.require_login # send user to auth_url based on the client_secrets.json
+@oidc.require_login
 def login():
-    # This route triggers the OAuth 2.0 authorization request on 
     return redirect(url_for('home'))
-
 
 @app.route('/')
 def home():
@@ -39,25 +34,14 @@ def home():
         logging.debug(f"Access Token: {access_token}")
 
         try:
-            # Decode the JWT access token
             decoded_token = jwt.decode(access_token, options={"verify_signature": False}, algorithms=["RS256"])
             logging.debug(f"Decoded Token: {decoded_token}")
 
-            # Extract roles from the token
             realm_access = decoded_token.get('realm_access', {})
             roles = realm_access.get('roles', [])
             logging.debug(f"User Roles: {roles}")
 
-            # Fetch data from the resource server
-            headers = {'Authorization': f'Bearer {access_token}'}
-            newspapers_response = requests.get("http://localhost:5001/api/newspapers", headers=headers)
-            books_response = requests.get("http://localhost:5001/api/books", headers=headers)
-
-            newspapers = newspapers_response.json() if newspapers_response.status_code == 200 else {}
-            books = books_response.json() if books_response.status_code == 200 else {}
-
-            # Render the template with data from the resource server
-            return render_template('home.html', newspapers=newspapers, books=books, user_info=decoded_token, roles=roles)
+            return render_template('home.html', user_info=decoded_token, roles=roles)
 
         except jwt.DecodeError as e:
             logging.error(f"Failed to decode JWT: {e}")
@@ -68,27 +52,54 @@ def home():
     else:
         return redirect(url_for('login'))
 
+@app.route('/fetch_resources', methods=['POST'])
+@oidc.require_login
+def fetch_resources():
+    access_token = oidc.get_access_token()
+    headers = {'Authorization': f'Bearer {access_token}'}
 
-        
+    newspapers_response = requests.get("http://localhost:5001/api/newspapers", headers=headers)
+    books_response = requests.get("http://localhost:5001/api/books", headers=headers)
+
+    newspapers = newspapers_response.json() if newspapers_response.status_code == 200 else {}
+    books = books_response.json() if books_response.status_code == 200 else {}
+
+    decoded_token = jwt.decode(access_token, options={"verify_signature": False}, algorithms=["RS256"])
+    realm_access = decoded_token.get('realm_access', {})
+    roles = realm_access.get('roles', [])
+
+    # Render the home template with the fetched resources
+    return render_template('home.html', user_info=decoded_token, roles=roles, newspapers=newspapers, books=books)
+
+
 @app.route('/signout')
 def signout():
     # Retrieve the ID token from the session
-    id_token = session.get('oidc_auth_token', {}).get('id_token')
-    
+    id_token = session.get('oidc_id_token')  # Ensure this is the correct key for the ID token
 
-    
-    # Keycloak logout URL
-    keycloak_logout_url = (
-        "http://localhost:8080/realms/news_books_realm/protocol/openid-connect/logout"
-        f"?id_token_hint={id_token}&post_logout_redirect_uri={urllib.parse.quote('http://localhost:5000', safe='')}"
-    )
-    
+    # Define the base Keycloak logout URL
+    keycloak_base_logout_url = "http://localhost:8080/realms/news_books_realm/protocol/openid-connect/logout"
+
+    if id_token:
+        # Keycloak logout URL with id_token_hint
+        keycloak_logout_url = (
+            f"{keycloak_base_logout_url}?id_token_hint={id_token}"
+            f"&post_logout_redirect_uri={urllib.parse.quote('http://localhost:5000', safe='')}"
+        )
+    else:
+        # Keycloak logout URL with client_id if id_token_hint is missing
+        keycloak_logout_url = (
+            f"{keycloak_base_logout_url}?client_id=news_books_client"
+            f"&post_logout_redirect_uri={urllib.parse.quote('http://localhost:5000', safe='')}"
+        )
+
+    # Clear the session
     session.clear()
 
     # Redirect to Keycloak for logging out
     return redirect(keycloak_logout_url)
 
-# Optionally, clear the session after logging out
+
 @app.route('/logout')
 def logout():
     session.clear()

@@ -3,7 +3,6 @@ import jwt
 
 app = Flask(__name__)
 
-# Data (move from the client app to here)
 newspapers = {
     '1': 'News of the World',
     '2': 'Today\'s News'
@@ -13,16 +12,13 @@ books = {
     '2': 'Think Fast'
 }
 
-# Helper function to validate token
 def validate_token(token):
     try:
-        # Decode the token (in a real scenario, you'd verify it with Keycloak's public key)
         decoded_token = jwt.decode(token, options={"verify_signature": False}, algorithms=["RS256"])
         return decoded_token
     except Exception as e:
         return None
 
-# Endpoints for fetching data
 @app.route('/api/newspapers', methods=['GET'])
 def get_newspapers():
     auth_header = request.headers.get('Authorization')
