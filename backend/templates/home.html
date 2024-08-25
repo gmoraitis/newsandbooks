@@ -80,21 +80,19 @@
 
 <body>
     <div class="container">
-        <h1>Welcome, {{ user_info.preferred_username }}!</h1>
+        <h1>News and Books</h1>
+        <h3>Welcome, {{ user_info.preferred_username }}!</h3>
+
+        <p>Todays news are ...</p>
 
         {% if user_info %}
-        <form action="{{ url_for('fetch_resources') }}" method="post">
-            <button type="submit">Fetch Resources from Resource Server</button>
-        </form>
-
-        {% if newspapers %}
+        {% if newspapers or books %}
         <h2>Newspapers</h2>
         <ul>
             {% for id, name in newspapers.items() %}
             <li>{{ name }}</li>
             {% endfor %}
         </ul>
-        {% endif %}
 
         {% if 'premium' in roles and books %}
         <h2>Books</h2>
@@ -103,6 +101,11 @@
             <li>{{ name }}</li>
             {% endfor %}
         </ul>
+        {% endif %}
+        {% else %}
+        <form action="{{ url_for('fetch_resources') }}" method="post">
+            <button type="submit">Fetch Resources from Resource Server</button>
+        </form>
         {% endif %}
         
         <a href="{{ url_for('signout') }}">Logout</a>
