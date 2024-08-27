@@ -28,23 +28,27 @@
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
 
+        /* Main header styling */
         h1 {
             font-size: 2em;
             margin-bottom: 20px;
             color: #ffcc00;
         }
 
+        /* Section headers styling */
         h2 {
             font-size: 1.5em;
             margin-bottom: 10px;
             color: #ffa726;
         }
 
+        /* List styling */
         ul {
             list-style-type: none;
             padding: 0;
         }
 
+        /* Individual list item styling */
         li {
             margin: 10px 0;
             padding: 10px;
@@ -52,11 +56,13 @@
             border-radius: 5px;
         }
 
+        /* Link styling */
         a {
             color: #03a9f4;
             text-decoration: none;
         }
-
+    
+        /* Link hover effect */
         a:hover {
             text-decoration: underline;
         }
@@ -72,6 +78,7 @@
             cursor: pointer;
         }
 
+        /* Button hover effect */
         button:hover {
             background-color: #0288d1;
         }
@@ -81,37 +88,42 @@
 <body>
     <div class="container">
         <h1>News and Books</h1>
-        <h3>Welcome, {{ user_info.preferred_username }}!</h3>
+        
+        <!-- Display a welcome message with the user's given name -->
+        <h2>Welcome, {{ user_info.given_name }}!</h2>
 
-        <p>Todays news are ...</p>
-
-        {% if user_info %}
-        {% if newspapers or books %}
-        <h2>Newspapers</h2>
-        <ul>
-            {% for id, name in newspapers.items() %}
-            <li>{{ name }}</li>
-            {% endfor %}
-        </ul>
-
-        {% if 'premium' in roles and books %}
-        <h2>Books</h2>
-        <ul>
-            {% for id, name in books.items() %}
-            <li>{{ name }}</li>
-            {% endfor %}
-        </ul>
+        <!-- Check if there are newspapers in the resources and display them -->
+        {% if resources.newspapers %}
+            <h3>Newspapers</h3>
+            <ul>
+                <!-- Loop through each newspaper item and display it as a list item -->
+                {% for item in resources.newspapers %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
         {% endif %}
-        {% else %}
-        <form action="{{ url_for('fetch_resources') }}" method="post">
-            <button type="submit">Fetch Resources from Resource Server</button>
-        </form>
+
+        <!-- Check if there are books in the resources and display them -->
+        {% if resources.books %}
+            <h3>Books</h3>
+            <ul>
+                <!-- Loop through each book item and display it as a list item -->
+                {% for item in resources.books %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- If there are no resources (neither newspapers nor books), show a button to fetch resources -->
+        {% if not resources.newspapers and not resources.books %}
+            <form action="{{ url_for('fetch_resources') }}" method="get">
+                <button type="submit">Fetch Resources from microservice</button>
+            </form>
         {% endif %}
         
+        <br>
+        <!-- Provide a logout link -->
         <a href="{{ url_for('signout') }}">Logout</a>
-        {% else %}
-        <a href="{{ url_for('login') }}">Login</a>
-        {% endif %}
     </div>
 </body>
 
