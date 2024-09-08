@@ -107,3 +107,197 @@ http://localhost:5000/
 5. **Fetching Resources:** The user initiates a resource fetch, which may involve further redirects or authentication checks.
 6. **Final Redirect:** After the resource-fetching attempt, the user might be redirected back to the main page or another fallback URL, ensuring that the application flow remains consistent.
 
+
+
+
+- Port binding ? 
+docker run -p 5000:5000 -p 5001:5001 your_image_name
+
+- see docker images
+docker images 
+docke image ls
+
+
+1. List Running Containers
+To view only the containers that are currently running:
+docker ps
+
+CONTAINER ID: The unique identifier for the container.
+IMAGE: The image from which the container was created.
+COMMAND: The command that was used to start the container.
+CREATED: How long ago the container was created.
+STATUS: The current status of the container.
+PORTS: Ports exposed by the container.
+NAMES: The names assigned to the container.
+
+
+2. List All Containers
+To view all containers, including those that are stopped:
+
+docker ps -a
+
+3. Inspect a Specific Container
+To get detailed information about a specific container:
+
+docker inspect <container_id>
+Replace <container_id> with the actual ID or name of the container you want to inspect.
+
+4. View Container Logs
+To view logs for a specific container, which can be useful for debugging:
+
+docker logs <container_id>
+Replace <container_id> with the actual ID or name of the container.
+
+5. View Resource Usage
+To see the resource usage (CPU and memory) of your containers:
+
+docker stats
+This command provides a real-time stream of resource usage statistics for all running containers.
+
+
+To go inside a Docker container and get a shell prompt, you can use the `docker exec` command. Here’s how you can do it:
+
+### 1. **Using `docker exec` to Open a Shell**
+
+#### **Get a Bash Shell**
+
+If the container has `bash` installed, you can use:
+
+```bash
+docker exec -it <container_id_or_name> bash
+```
+
+#### **Get a Sh Shell**
+
+If `bash` is not available, you can use `sh`, which is available in most containers:
+
+```bash
+docker exec -it <container_id_or_name> sh
+```
+
+### 2. **Detailed Steps**
+
+1. **Find the Container ID or Name**
+
+   First, you need to know the ID or name of the container you want to access. You can list all running containers with:
+
+   ```bash
+   docker ps
+   ```
+
+   This command will show you the container IDs and names.
+
+2. **Access the Container**
+
+   Once you have the container ID or name, use `docker exec` to start a shell session:
+
+   ```bash
+   docker exec -it <container_id_or_name> bash
+   ```
+
+   or
+
+   ```bash
+   docker exec -it <container_id_or_name> sh
+   ```
+
+   Here’s a breakdown of the flags used:
+   - `-i` (interactive) keeps the STDIN open even if not attached.
+   - `-t` (pseudo-TTY) allocates a terminal.
+
+### Examples
+
+#### **Accessing a Container with Bash**
+
+If your container is named `my_container` and has `bash` installed:
+
+```bash
+docker exec -it my_container bash
+```
+
+#### **Accessing a Container with Sh**
+
+If your container is named `my_container` but only has `sh`:
+
+```bash
+docker exec -it my_container sh
+```
+
+### Additional Tips
+
+- **Exit the Shell**: To exit the container's shell, simply type `exit` and press Enter.
+
+- **Running Commands**: You can also run a single command inside the container without starting an interactive shell. For example:
+
+  ```bash
+  docker exec -it <container_id_or_name> ls /app
+  ```
+
+  This runs the `ls /app` command inside the container and prints the output.
+
+- **Different Users**: If you need to run the shell as a different user, you can specify the `-u` option:
+
+  ```bash
+  docker exec -it -u <username> <container_id_or_name> bash
+  ```
+
+By using `docker exec`, you can interact with your container’s filesystem and processes, which is useful for debugging, managing applications, or running maintenance tasks.
+
+
+
+
+Trtansferring kc settings from original  to docker
+
+- news_books_realm
+  - Settings
+    - Realm ID* : news_books_realm
+      Display name : News and Books
+      HTML Display name : 
+      Frontend URL :  
+      Require SSL :External requests
+
+      User-managed access : Off
+      Unmanaged Attributes : Disabled
+      Endpoints 
+      OpenID Endpoint Configuration 
+      SAML 2.0 Identity Provider Metadata 
+
+    - Login 
+      - User registration : On
+      - Login with email: On
+      (All other off)
+    
+    - Email Nothing here
+
+    - Themes Nothing here
+
+    - Keys Nothing here
+
+    - Events
+      - Events listeners : jboss-logging
+      - User events settings : Nothing here
+      - Admin events settings : Nothing here
+    
+    - Localization (nothing here)
+
+    - Security defenecs ,  - sessions nothing here
+
+
+- i am changing the localhost to -> host.docker.internal
+in ms.py in the kc api calls
+
+in app.py where i am making api calls to kc
+
+in client secrets issuer, auth_uri, userinfo_uri, and token_uri.
+
+keep note on app.py:
+    keycloak_base_logout_url = "http://172.17.0.1:8080/realms/news_books_realm/protocol/openid-connect/logout"
+
+
+ps
+stop
+rm
+build
+run
+
+worked by adding Pyjwt instead of jwt on dockerfile installations

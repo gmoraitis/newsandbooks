@@ -17,7 +17,8 @@ app.config.update({
     'OIDC_ID_TOKEN_COOKIE_SECURE': False,  # Insecure cookie for development (not recommended in production)
     'OIDC_SCOPES': ['openid', 'email', 'profile'],  # Scopes requested during authentication
     'OIDC_USER_INFO_ENABLED': True,  # Enable user info endpoint access
-    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post'  # Auth method for token introspection
+    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post',  # Auth method for token introspection,
+
 })
 
 # Initialize the OIDC extension with the Flask app
@@ -71,19 +72,19 @@ def signout():
     id_token = session.get('oidc_id_token')
 
     # Base URL for Keycloak logout
-    keycloak_base_logout_url = "http://localhost:8080/realms/news_books_realm/protocol/openid-connect/logout"
+    keycloak_base_logout_url = "http://172.17.0.1:8080/realms/news_books_realm/protocol/openid-connect/logout"
 
     if id_token:
         # If ID token is present, construct logout URL with token hint
         keycloak_logout_url = (
             f"{keycloak_base_logout_url}?id_token_hint={id_token}"
-            f"&post_logout_redirect_uri={urllib.parse.quote('http://localhost:5000', safe='')}"
+            f"&post_logout_redirect_uri={urllib.parse.quote('http://172.17.0.1:5000', safe='')}"
         )
     else:
         # If ID token is not present, construct a basic logout URL
         keycloak_logout_url = (
             f"{keycloak_base_logout_url}?client_id=news_books_client"
-            f"&post_logout_redirect_uri={urllib.parse.quote('http://localhost:5000', safe='')}"
+            f"&post_logout_redirect_uri={urllib.parse.quote('http://172.17.0.1:5000', safe='')}"
         )
 
     # Clear the session to log out locally
@@ -98,6 +99,7 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
-if __name__ == '__main__':
-    # Start the Flask application in debug mode
-    app.run(debug=True)
+# Entry point to run the Flask app
+app.run(host='0.0.0.0', port=5000, debug=True)
+
+

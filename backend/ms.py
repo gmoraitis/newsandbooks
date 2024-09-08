@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 import jwt
+from jwt import exceptions
 import requests
 
 app = Flask(__name__)
@@ -17,7 +18,7 @@ books = {
 # Function to fetch the public key(s) from Keycloak's JWKS (JSON Web Key Set) endpoint
 def get_keycloak_public_key():
     # URL to fetch the JWKS from Keycloak
-    jwks_url = "http://localhost:8080/realms/news_books_realm/protocol/openid-connect/certs"
+    jwks_url = "http://172.17.0.1:8080/realms/news_books_realm/protocol/openid-connect/certs"
     
     # Fetch and parse the JWKS JSON response
     jwks = requests.get(jwks_url).json()
@@ -89,6 +90,5 @@ def get_res():
     return jsonify({'newspapers': [], 'books': []}), 401
 
 # Entry point to run the Flask app
-if __name__ == '__main__':
-    # Run the Flask app on port 5001 with debug mode enabled
-    app.run(port=5001, debug=True)
+app.run(host='0.0.0.0', port=5001, debug=True)
+
