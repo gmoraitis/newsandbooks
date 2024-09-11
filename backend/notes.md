@@ -296,8 +296,8 @@ keep note on app.py:
 
 ps
 stop
-rm
-build
+rm - (no change on the image) run. 
+build (change on the image)
 run
 
 worked by adding Pyjwt instead of jwt on dockerfile installations

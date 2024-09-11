@@ -19,3 +19,4 @@ EXPOSE 5001
 
 # Run the application
 CMD ["sh", "-c", "python app.py & python ms.py"]
+
