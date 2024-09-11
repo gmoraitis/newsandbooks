@@ -22,8 +22,8 @@ build:
 deploy:
   stage: deploy
   script:
-    - docker stop fappci  # Stop the container if it's already running
-    - docker rm fappci    # Remove any old container
+    - docker stop fappci || true # Stop the container if it's already running
+    - docker rm fappci || true   # Remove any old container
     - docker run -d --name fappci -p 5000:5000 -p 5001:5001 fappci  # Run the app in a new container
   only:
     - main  # Only run on the main branch
