@@ -1,8 +1,8 @@
-# Backend
-backend/venv/
-backend/pyenv.cfg
-backend/__pycache__/
-backend/client_secrets.json
+# 
+/venv/
+/pyenv.cfg
+/__pycache__/
+/client_secrets.json
 
 
 # Editor directories and files
