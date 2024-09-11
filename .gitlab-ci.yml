@@ -1,10 +1,13 @@
-image: docker:latest  # Docker image that includes Docker
+image: docker:latest  # Use Docker image that includes Docker
 
 services:
-  - docker:dind  # Docker-in-Docker service
+  - docker:dind  # Enable Docker-in-Docker
 
 variables:
   DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375/  # Necessary for Docker to work in Docker-in-Docker mode
+  DOCKER_TLS_CERTDIR: ""
+
 # Define stages
 stages:
   - build
@@ -14,7 +17,10 @@ stages:
 build:
   stage: build
   script:
-    - docker build -t fappci .
+    - docker build -t fappci .  # Build the Docker image
+    - docker tag fappci registry.gitlab.com/gmoraitis/newsandbooks:latest  # Tag the image
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"  # Login to the registry
+    - docker push registry.gitlab.com/gmoraitis/newsandbooks:latest  # Push the image to the GitLab container registry
   only:
     - main  # Only run on the main branch
 
@@ -22,10 +28,10 @@ build:
 deploy:
   stage: deploy
   script:
-    - docker stop fappci || true # Stop the container if it's already running
-    - docker rm fappci || true   # Remove any old container
-    - docker run -d --name fappci -p 5000:5000 -p 5001:5001 fappci  # Run the app in a new container
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"  # Login to the registry
+    - docker pull registry.gitlab.com/gmoraitis/newsandbooks:latest  # Pull the image from the GitLab container registry
+    - docker stop fappci || true  # Stop the container if it's already running
+    - docker rm fappci || true    # Remove any old container
+    - docker run -d --name fappci -p 5000:5000 -p 5001:5001 registry.gitlab.com/gmoraitis/newsandbooks:latest  # Run the app in a new container
   only:
     - main  # Only run on the main branch
-
-
